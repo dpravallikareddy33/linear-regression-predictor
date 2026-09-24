@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Linear Regression Predictor</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 8px;
+            color: #222;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 17px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: #222;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            background: #222;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #444;
+        }
+
+        #result {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f1f1f1;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .result-label {
+            color: #666;
+        }
+
+        .prediction {
+            font-size: 38px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .info-box {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .info-title {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .equation {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .graph-card {
+            grid-column: 1 / -1;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+
+        #error {
+            color: red;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 25px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 700px) {
+
+            body {
+                padding: 15px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .graph-card {
+                grid-column: auto;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+
+    <!-- HEADER -->
+
+    <div class="header">
+
+        <h1>Linear Regression Predictor</h1>
+
+        <p>
+            Predict student marks based on study hours
+        </p>
+
+    </div>
+
+
+    <div class="grid">
+
+
+        <!-- PREDICTION -->
+
+        <div class="card">
+
+            <h2>🎯 Make a Prediction</h2>
+
+            <label for="hours">
+                Hours Studied
+            </label>
+
+            <input
+                type="number"
+                id="hours"
+                placeholder="Enter study hours"
+                step="0.1"
+                min="0"
+            >
+
+            <button onclick="predictMarks()">
+                Predict Marks
+            </button>
+
+
+            <div id="result">
+
+                <div class="result-label">
+                    Predicted Marks
+                </div>
+
+                <div
+                    class="prediction"
+                    id="prediction"
+                >
+                    -
+                </div>
+
+            </div>
+
+
+            <div id="error"></div>
+
+        </div>
+
+
+        <!-- MODEL INFORMATION -->
+
+        <div class="card">
+
+            <h2>📊 Model Information</h2>
+
+            <div class="info-grid">
+
+
+                <div class="info-box">
+
+                    <div class="info-title">
+                        Algorithm
+                    </div>
+
+                    <div
+                        class="info-value"
+                        id="algorithm"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-title">
+                        Training Samples
+                    </div>
+
+                    <div
+                        class="info-value"
+                        id="samples"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-title">
+                        R² Score
+                    </div>
+
+                    <div
+                        class="info-value"
+                        id="r2"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-title">
+                        MSE
+                    </div>
+
+                    <div
+                        class="info-value"
+                        id="mse"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="equation">
+
+                <div>
+                    Regression Equation
+                </div>
+
+                <div id="equation">
+                    Loading...
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- GRAPH -->
+
+        <div class="card graph-card">
+
+            <h2>📈 Linear Regression Graph</h2>
+
+            <div class="chart-container">
+
+                <canvas id="regressionChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <div class="status">
+
+        Connected to FastAPI Backend 🚀
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+/* --------------------------------------------------
+   BACKEND
+-------------------------------------------------- */
+
+const API_URL = "http://127.0.0.1:8000";
+
+
+let regressionChart;
+
+
+/* --------------------------------------------------
+   LOAD MODEL INFORMATION
+-------------------------------------------------- */
+
+async function loadModelInfo() {
+
+    try {
+
+        const response =
+            await fetch(
+                API_URL + "/model-info"
+            );
+
+        const data =
+            await response.json();
+
+
+        document.getElementById("algorithm")
+            .innerText =
+            data.algorithm;
+
+
+        document.getElementById("samples")
+            .innerText =
+            data.training_samples;
+
+
+        document.getElementById("r2")
+            .innerText =
+            data.r2_score;
+
+
+        document.getElementById("mse")
+            .innerText =
+            data.mean_squared_error;
+
+
+        const slope =
+            data.slope;
+
+        const intercept =
+            data.intercept;
+
+
+        let equationText;
+
+
+        if (intercept >= 0) {
+
+            equationText =
+                "Marks = "
+                + slope
+                + " × Hours + "
+                + intercept;
+
+        } else {
+
+            equationText =
+                "Marks = "
+                + slope
+                + " × Hours - "
+                + Math.abs(intercept);
+
+        }
+
+
+        document.getElementById("equation")
+            .innerText =
+            equationText;
+
+    }
+
+    catch (error) {
+
+        console.log(
+            "Could not load model information."
+        );
+
+    }
+
+}
+
+
+/* --------------------------------------------------
+   LOAD GRAPH
+-------------------------------------------------- */
+
+async function loadGraph() {
+
+    try {
+
+        const response =
+            await fetch(
+                API_URL + "/graph-data"
+            );
+
+
+        const data =
+            await response.json();
+
+
+        /* Actual training points */
+
+        const actualPoints =
+            data.hours.map(
+                (hour, index) => {
+
+                    return {
+                        x: hour,
+                        y: data.actual_marks[index]
+                    };
+
+                }
+            );
+
+
+        /* Regression line */
+
+        const regressionPoints =
+            data.hours.map(
+                (hour, index) => {
+
+                    return {
+                        x: hour,
+                        y: data.predicted_marks[index]
+                    };
+
+                }
+            );
+
+
+        const ctx =
+            document
+                .getElementById(
+                    "regressionChart"
+                );
+
+
+        regressionChart =
+            new Chart(
+                ctx,
+                {
+
+                    type: "scatter",
+
+                    data: {
+
+                        datasets: [
+
+                            /* ACTUAL DATA */
+
+                            {
+
+                                label:
+                                    "Actual Data",
+
+                                data:
+                                    actualPoints,
+
+                                pointRadius: 6
+
+                            },
+
+
+                            /* REGRESSION LINE */
+
+                            {
+
+                                label:
+                                    "Regression Line",
+
+                                data:
+                                    regressionPoints,
+
+                                type: "line",
+
+                                borderWidth: 3,
+
+                                pointRadius: 0,
+
+                                tension: 0
+
+                            },
+
+
+                            /* USER PREDICTION */
+
+                            {
+
+                                label:
+                                    "Your Prediction",
+
+                                data: [],
+
+                                pointRadius: 9,
+
+                                pointHoverRadius: 12,
+
+                                showLine: false
+
+                            }
+
+                        ]
+
+                    },
+
+
+                    options: {
+
+                        responsive: true,
+
+                        maintainAspectRatio: false,
+
+                        scales: {
+
+                            x: {
+
+                                type: "linear",
+
+                                title: {
+
+                                    display: true,
+
+                                    text:
+                                        "Hours Studied"
+
+                                }
+
+                            },
+
+
+                            y: {
+
+                                title: {
+
+                                    display: true,
+
+                                    text:
+                                        "Marks"
+
+                                },
+
+                                beginAtZero: true
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            );
+
+    }
+
+    catch (error) {
+
+        console.log(
+            "Could not load graph."
+        );
+
+    }
+
+}
+
+
+/* --------------------------------------------------
+   PREDICT
+-------------------------------------------------- */
+
+async function predictMarks() {
+
+    const hours =
+        parseFloat(
+            document
+                .getElementById("hours")
+                .value
+        );
+
+
+    const result =
+        document.getElementById(
+            "result"
+        );
+
+
+    const predictionElement =
+        document.getElementById(
+            "prediction"
+        );
+
+
+    const error =
+        document.getElementById(
+            "error"
+        );
+
+
+    /* CHECK INPUT */
+
+    if (isNaN(hours)) {
+
+        error.innerText =
+            "Please enter study hours.";
+
+        result.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    if (hours < 0) {
+
+        error.innerText =
+            "Hours cannot be negative.";
+
+        result.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    error.innerText = "";
+
+
+    try {
+
+        /* SEND INPUT TO FASTAPI */
+
+        const response =
+            await fetch(
+                API_URL + "/predict",
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            hours: hours
+
+                        })
+
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Prediction failed"
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        /* SHOW PREDICTION */
+
+        predictionElement.innerText =
+            data.predicted_marks;
+
+
+        result.style.display =
+            "block";
+
+
+        /* --------------------------------------------------
+           UPDATE GRAPH WITH USER PREDICTION
+        -------------------------------------------------- */
+
+        if (regressionChart) {
+
+            regressionChart.data.datasets[2].data = [
+
+                {
+
+                    x: data.input_hours,
+
+                    y: data.predicted_marks
+
+                }
+
+            ];
+
+
+            regressionChart.update();
+
+        }
+
+    }
+
+    catch (err) {
+
+        error.innerText =
+            "Could not connect to FastAPI.";
+
+        result.style.display =
+            "none";
+
+    }
+
+}
+
+
+/* --------------------------------------------------
+   ENTER KEY
+-------------------------------------------------- */
+
+document
+    .getElementById("hours")
+    .addEventListener(
+        "keypress",
+        function(event) {
+
+            if (event.key === "Enter") {
+
+                predictMarks();
+
+            }
+
+        }
+    );
+
+
+/* --------------------------------------------------
+   START
+-------------------------------------------------- */
+
+loadModelInfo();
+
+loadGraph();
+
+
+</script>
+
+
+</body>
+
+</html>
